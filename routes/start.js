@@ -16,11 +16,13 @@ const router = express.Router();
 
 router.get("/users", UsersController.index); //on utilise la fonction index de la classe UserController du fichier UserController pour l'URL /users
 router.post("/users", UsersController.store);
+router.post("/cards", UsersController.storeCards);
 router.get("/users/:idUser", UsersController.show);
 router.put("/users/:idUser", UsersController.update);
 router.delete("/users/:idUser", UsersController.destroy);
 
 router.post("/login", AuthentificationController.login);
+
 router.get(
   "/getMyProfile",
   AuthMiddleware.authenticate,

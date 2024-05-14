@@ -4,7 +4,15 @@ const { hashPassword } = require("../utils/bcrypt");
 class UsersController {
   async getMyProfile(req, res) {
     const user = req.user;
-    return res.status(200).send(user);
+    const id = user.id;
+    const cards = await prisma.userCard.findMany({
+      where: {
+        id: parseInt(id),
+      },
+    });
+    // console.log("Cartes de l'utilisateur:", cards);
+    // console.log("Id de l'utilisateur:", id);
+    return res.status(200).send({ user, cards });
   }
 
   async index(req, res) {
@@ -36,19 +44,63 @@ class UsersController {
     }
   }
 
+  async storeCards(req, res) {
+    try {
+      const body = req.body;
+      const userId = body.id;
+      const cardIds = body.idCards;
+
+      // Récupérer les identifiants des cartes que l'utilisateur possède déjà
+      const existingUserCards = await prisma.userCard.findMany({
+        where: {
+          id: userId,
+          cardId: {
+            in: cardIds,
+          },
+        },
+      });
+
+      //filtrer
+      const newCardIds = cardIds.filter(
+        (cardId) =>
+          !existingUserCards.some((userCard) => userCard.cardId === cardId)
+      );
+
+      const createdUserCards = await Promise.all(
+        newCardIds.map(async (cardId) => {
+          return await prisma.userCard.create({
+            data: {
+              cardId: cardId,
+              id: userId,
+            },
+          });
+        })
+      );
+
+      console.log(createdUserCards);
+
+      return res.status(201).json(createdUserCards);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  }
+
   async show(req, res) {
     try {
       const id = req.params.idUser;
+
       const user = await prisma.user.findUnique({
         where: { id: parseInt(id) },
       });
 
-      if (user === null) {
+      if (!user) {
         return res.status(404).send("User not found");
       }
 
       return res.status(200).send(user);
     } catch (err) {
+      console.error("Erreur:", err);
       return res.status(500).send({
         message: err.message,
       });
