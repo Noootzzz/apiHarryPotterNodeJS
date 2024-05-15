@@ -48,7 +48,9 @@ class UsersController {
     try {
       const body = req.body;
       const userId = body.id;
+      // console.log(userId);
       const cardIds = body.idCards;
+      // console.log(cardIds);
 
       // Récupérer les identifiants des cartes que l'utilisateur possède déjà
       const existingUserCards = await prisma.userCard.findMany({
@@ -77,12 +79,14 @@ class UsersController {
         })
       );
 
-      console.log(createdUserCards);
+      // console.log(createdUserCards);
 
       return res.status(201).json(createdUserCards);
     } catch (err) {
       console.error(err);
-      return res.status(500).json({ message: "Internal server error" });
+      return res
+        .status(500)
+        .json({ message: "Internal server error", error: err });
     }
   }
 
